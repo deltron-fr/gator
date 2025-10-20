@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-
 func handlerReset(s *state, cmd command) error {
 	if len(cmd.args) > 1 {
 		return fmt.Errorf("usage: %s", cmd.name)
