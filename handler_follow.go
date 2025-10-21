@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/deltron-fr/rss-aggregator/internal/database"
+	"github.com/deltron-fr/gator/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -54,4 +54,25 @@ func handlerFollowing(s *state, cmd command, user database.User) error {
 
 	return nil
 
+}
+
+func handlerUnfollow(s *state, cmd command, user database.User) error {
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("usage: %s <url>", cmd.name)
+	}
+
+	url := cmd.args[0]
+
+	feed, err := s.db.GetFeed(context.Background(), url)
+	if err != nil {
+		return fmt.Errorf("could not get feed: %w", err)
+	}
+
+	s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
+		UserID: user.ID,
+		FeedID: feed.ID,
+	})
+
+	fmt.Printf("you have unfollowed feed: %s", feed.Name)
+	return nil
 }

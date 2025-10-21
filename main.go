@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/deltron-fr/rss-aggregator/internal/config"
-	"github.com/deltron-fr/rss-aggregator/internal/database"
+	"github.com/deltron-fr/gator/internal/config"
+	"github.com/deltron-fr/gator/internal/database"
 )
 
 const dbURL = "postgres://postgres:postgres@localhost:5432/gator"
@@ -41,6 +41,7 @@ func main() {
 	cliCommands.register("feeds", handlerGetFeeds)
 	cliCommands.register("follow", middlewareLoggedIn(handlerFollow))
 	cliCommands.register("following", middlewareLoggedIn(handlerFollowing))
+	cliCommands.register("unfollow", middlewareLoggedIn(handlerUnfollow))
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: cli <command> [args...]")

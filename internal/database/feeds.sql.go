@@ -85,7 +85,7 @@ VALUES(
 	$5,
 	$6
 )
-RETURNING id, name, url, created_at, updated_at, user_id
+RETURNING id, name, url, created_at, updated_at, user_id, last_fetched_at
 `
 
 type CreatefeedParams struct {
@@ -114,13 +114,30 @@ func (q *Queries) Createfeed(ctx context.Context, arg CreatefeedParams) (Feed, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
+		&i.LastFetchedAt,
 	)
 	return i, err
 }
 
+const deleteFeedFollow = `-- name: DeleteFeedFollow :exec
+
+DELETE FROM feed_follows 
+WHERE ($1 = user_id) AND ($2 = feed_id)
+`
+
+type DeleteFeedFollowParams struct {
+	UserID uuid.UUID
+	FeedID uuid.UUID
+}
+
+func (q *Queries) DeleteFeedFollow(ctx context.Context, arg DeleteFeedFollowParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFeedFollow, arg.UserID, arg.FeedID)
+	return err
+}
+
 const getFeed = `-- name: GetFeed :one
 
-SELECT id, name, url, created_at, updated_at, user_id
+SELECT id, name, url, created_at, updated_at, user_id, last_fetched_at
 FROM feeds
 WHERE $1 = url
 `
@@ -135,6 +152,7 @@ func (q *Queries) GetFeed(ctx context.Context, url string) (Feed, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
+		&i.LastFetchedAt,
 	)
 	return i, err
 }
@@ -178,7 +196,7 @@ func (q *Queries) GetFeedFollows(ctx context.Context, userID uuid.UUID) ([]GetFe
 
 const getFeeds = `-- name: GetFeeds :many
 
-SELECT id, name, url, created_at, updated_at, user_id FROM feeds
+SELECT id, name, url, created_at, updated_at, user_id, last_fetched_at FROM feeds
 `
 
 func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
@@ -197,6 +215,7 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.UserID,
+			&i.LastFetchedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -211,6 +230,28 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
 	return items, nil
 }
 
+const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
+
+SELECT id, name, url, created_at, updated_at, user_id, last_fetched_at
+FROM feeds
+ORDER BY last_fetched_at ASC NULLS FIRST LIMIT 1
+`
+
+func (q *Queries) GetNextFeedToFetch(ctx context.Context) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, getNextFeedToFetch)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Url,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
+		&i.LastFetchedAt,
+	)
+	return i, err
+}
+
 const getUserFeeds = `-- name: GetUserFeeds :one
 SELECT users.name
 FROM users
@@ -223,4 +264,16 @@ func (q *Queries) GetUserFeeds(ctx context.Context, id uuid.UUID) (string, error
 	var name string
 	err := row.Scan(&name)
 	return name, err
+}
+
+const markFeedFetched = `-- name: MarkFeedFetched :exec
+
+UPDATE feeds
+SET last_fetched_at = NOW(), updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) MarkFeedFetched(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, markFeedFetched, id)
+	return err
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/deltron-fr/rss-aggregator/internal/database"
+	"github.com/deltron-fr/gator/internal/database"
 )
 
 func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {

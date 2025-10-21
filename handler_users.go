@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/deltron-fr/rss-aggregator/internal/database"
+	"github.com/deltron-fr/gator/internal/database"
 	"github.com/google/uuid"
 )
 
