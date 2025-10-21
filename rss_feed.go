@@ -2,15 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/xml"
 	"fmt"
+	"html"
 	"io"
 	"log"
 	"net/http"
-	"encoding/xml"
-	"html"
 )
-
-
 
 type RSSFeed struct {
 	Channel struct {
@@ -27,7 +25,6 @@ type RSSItem struct {
 	Description string `xml:"description"`
 	PubDate     string `xml:"pubDate"`
 }
-
 
 func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
