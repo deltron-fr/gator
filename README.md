@@ -1,4 +1,4 @@
-## go-gator
+## gator
 
 A CLI application for aggregating [RSS](https://en.wikipedia.org/wiki/RSS) feeds.
 It supports a local multi-user setup and stores data in PostgreSQL.
